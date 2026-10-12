@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aslı Gibidir</title>
+  <meta name="description" content="Belge, beyaz tahta ve kartvizit tarayıcı — görüntüler cihazınızda işlenir.">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>Aslı Gibidir</h1>
+    <p class="tagline">Belge, beyaz tahta ve kartvizit tarayıcı</p>
+  </header>
+
+  <main>
+    <fieldset class="modes" id="modes">
+      <legend>Mod</legend>
+      <label><input type="radio" name="mode" value="document" checked> Belge</label>
+      <label><input type="radio" name="mode" value="whiteboard"> Beyaz tahta</label>
+      <label><input type="radio" name="mode" value="card"> Kartvizit</label>
+    </fieldset>
+    <p class="hint" id="mode-hint"></p>
+
+    <label class="capture">
+      <input type="file" id="file" accept="image/*" capture="environment">
+      <span>Fotoğraf çek / görsel seç</span>
+    </label>
+
+    <p class="status" id="status" role="status" aria-live="polite"></p>
+
+    <section id="result" hidden>
+      <div class="view-toggle">
+        <label><input type="checkbox" id="show-original"> Orijinali göster</label>
+      </div>
+      <canvas id="canvas"></canvas>
+      <div class="actions">
+        <button type="button" id="download-image">Görüntüyü indir (PNG)</button>
+      </div>
+    </section>
+
+    <section id="card" hidden>
+      <h2>Kişi bilgileri</h2>
+      <p class="hint">OCR sonucunu kontrol edip düzeltin, ardından kişi kartını indirin.</p>
+      <form id="card-form">
+        <label>Ad Soyad <input name="name" autocomplete="off"></label>
+        <label>Ünvan <input name="title" autocomplete="off"></label>
+        <label>Kurum <input name="org" autocomplete="off"></label>
+        <label>Telefonlar <small>(her satıra bir numara; "Cep:", "İş:" veya "Faks:" ile başlayabilir)</small>
+          <textarea name="phones" rows="3"></textarea></label>
+        <label>E-postalar <small>(her satıra bir adres)</small>
+          <textarea name="emails" rows="2"></textarea></label>
+        <label>Web <small>(her satıra bir adres)</small>
+          <textarea name="urls" rows="1"></textarea></label>
+        <label>Adres <textarea name="address" rows="2"></textarea></label>
+        <button type="submit">Kişi kartını indir (.vcf)</button>
+      </form>
+      <details>
+        <summary>Ham OCR metni</summary>
+        <pre id="ocr-text"></pre>
+      </details>
+    </section>
+  </main>
+
+  <script type="module" src="src/app.js"></script>
+</body>
+</html>
