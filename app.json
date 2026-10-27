@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "Aslı Gibidir",
+    "slug": "asligibidir",
+    "version": "0.2.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.asligibidir.app"
+    },
+    "android": {
+      "package": "com.asligibidir.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/favicon.png",
+      "lang": "tr",
+      "description": "Belge, beyaz tahta ve kartvizit tarayıcı",
+      "themeColor": "#1f6feb"
+    },
+    "plugins": [
+      "expo-sharing",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Taramak istediğiniz görselleri seçmek için fotoğraflarınıza erişim gerekiyor.",
+          "cameraPermission": "Belge, tahta ve kartvizit fotoğrafı çekmek için kamera erişimi gerekiyor."
+        }
+      ]
+    ]
+  }
+}
