@@ -75,10 +75,11 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
-          cache: gradle
       - run: npm ci
       - name: Generate native project
         run: npx expo prebuild --platform android --no-install
+      # Gradle caching has to start after prebuild: android/ doesn't exist before it.
+      - uses: gradle/actions/setup-gradle@v5
       - name: Build release APK
         working-directory: android
         # arm64 only: covers practically all current phones and halves build time.
