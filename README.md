@@ -51,6 +51,26 @@ altındadır:
 - `public/sw.js` — çevrimdışı önbellek (yalnızca production derlemesinde kaydedilir)
 - `public/icons/` — 192/512 px ikonlar ve Apple dokunmatik ikonu
 
+## GitHub Actions (CI)
+
+`.github/workflows/ci.yml` her PR'da ve `main`'e her push'ta çalışır:
+
+| İş | Ne yapar | Çıktı |
+| --- | --- | --- |
+| **Tests** | `npm test` | — |
+| **Web (PWA) build** | `/asligibidir` alt yoluyla `expo export` | Pages paketi |
+| **Deploy to GitHub Pages** | Yalnızca `main`'e push'ta yayınlar | https://mifarosa.github.io/asligibidir/ |
+| **Android APK** | `expo prebuild` + Gradle `assembleRelease` (arm64) | Çalışma sayfasında `asligibidir-android` artifact'ı |
+
+**Bir kerelik ayar:** Repo → *Settings* → *Pages* → *Build and deployment* →
+*Source*: **GitHub Actions** seçilmeli. Yoksa yayınlama adımı hata verir.
+
+**APK'yı telefona kurma:** *Actions* sekmesinde ilgili çalışmayı açın,
+*Artifacts* bölümünden `asligibidir-android` dosyasını indirin, zip'i açın ve
+APK'yı telefona aktarıp kurun ("bilinmeyen kaynaklar" izni gerekir). APK
+hata ayıklama anahtarıyla imzalıdır: test içindir, Play Store'a yüklenemez.
+iOS derlemesi macOS ve Apple geliştirici hesabı gerektirdiği için CI'da yok.
+
 ## Kod yapısı
 
 - `App.js` — tek ekranlı arayüz (mod seçimi, önizleme, kişi formu)

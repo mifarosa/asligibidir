@@ -4,7 +4,9 @@
 //   - same-origin assets and the OCR CDN (Tesseract.js, language data):
 //     cache first, since those URLs are immutable/versioned
 const CACHE = 'asligibidir-v1';
-const SHELL = ['/', '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'];
+// Relative to the worker's own URL, so the app also works under a sub-path
+// (e.g. GitHub Pages project sites).
+const SHELL = ['./', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
 const CDN_HOSTS = ['cdn.jsdelivr.net'];
 
 self.addEventListener('install', (event) => {
@@ -23,12 +25,13 @@ self.addEventListener('activate', (event) => {
 
 async function networkFirst(request) {
   const cache = await caches.open(CACHE);
+  const shell = self.registration.scope;
   try {
     const response = await fetch(request);
-    if (response.ok) cache.put('/', response.clone());
+    if (response.ok) cache.put(shell, response.clone());
     return response;
   } catch {
-    return (await cache.match('/')) ?? Response.error();
+    return (await cache.match(shell)) ?? Response.error();
   }
 }
 

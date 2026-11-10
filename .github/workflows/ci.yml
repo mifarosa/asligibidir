@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+  web:
+    name: Web (PWA) build
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Export web build
+        run: npx expo export --platform web
+        env:
+          # GitHub Pages serves project sites under /<repo>/
+          EXPO_BASE_URL: /${{ github.event.repository.name }}
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+
+  deploy-web:
+    name: Deploy to GitHub Pages
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: web
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+  android:
+    name: Android APK
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+      - run: npm ci
+      - name: Generate native project
+        run: npx expo prebuild --platform android --no-install
+      - name: Build release APK
+        working-directory: android
+        # arm64 only: covers practically all current phones and halves build time.
+        # The template signs release builds with the debug key, so the APK is
+        # installable for testing but not suitable for the Play Store.
+        run: ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: asligibidir-android
+          path: android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
