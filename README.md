@@ -58,8 +58,8 @@ altındadır:
 | İş | Ne yapar | Çıktı |
 | --- | --- | --- |
 | **Tests** | `npm test` | — |
-| **Web (PWA) build** | `/asligibidir` alt yoluyla `expo export` | Pages paketi |
-| **Deploy to GitHub Pages** | Yalnızca `main`'e push'ta yayınlar | https://mifarosa.github.io/asligibidir/ |
+| **Web (PWA) build** | `expo export`; kök yol Pages ayarından okunur (özel alan adında `/`, yoksa `/asligibidir`) | Pages paketi |
+| **Deploy to GitHub Pages** | Yalnızca `main`'e push'ta yayınlar | https://asligibidir.mifarosa.com/ |
 | **Android APK** | `expo prebuild` + Gradle `assembleRelease` (arm64) | Çalışma sayfasında `asligibidir-android` artifact'ı |
 
 **Bir kerelik ayar:** Repo → *Settings* → *Pages* → *Build and deployment* →
