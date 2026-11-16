@@ -30,6 +30,9 @@ jobs:
     name: Web (PWA) build
     needs: test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: read
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -37,11 +40,14 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # Reads the site's base path from the Pages settings: "/<repo>" for
+      # <user>.github.io/<repo>/, empty when a custom domain serves it at "/".
+      - id: pages
+        uses: actions/configure-pages@v5
       - name: Export web build
         run: npx expo export --platform web
         env:
-          # GitHub Pages serves project sites under /<repo>/
-          EXPO_BASE_URL: /${{ github.event.repository.name }}
+          EXPO_BASE_URL: ${{ steps.pages.outputs.base_path }}
       - uses: actions/upload-pages-artifact@v4
         with:
           path: dist
