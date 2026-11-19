@@ -4,6 +4,13 @@ Belge, beyaz tahta ve kartvizit tarayıcı. Expo (React Native) ile yazıldı;
 aynı kod **PWA** (tarayıcıdan "Ana ekrana ekle"), **Android** ve **iOS** olarak
 çalışır. Görüntüler cihazda işlenir; sunucuya yüklenmez.
 
+## Kırpma ve perspektif düzeltme
+
+Fotoğraf seçildikten sonra belge (sayfa, kart veya tahta) kenarları otomatik
+bulunur ve köşeleri işaretlenir. Köşeler sürüklenerek düzeltilebilir; "Kırp ve
+devam et" eğik çekilmiş belgeyi düz bir dikdörtgene çevirir, "Tamamını kullan"
+fotoğrafın tamamını alır. Sonuç ekranındaki "Köşeleri düzenle" ile geri dönülebilir.
+
 ## Modlar
 
 | Mod | Ne yapar |
@@ -77,6 +84,9 @@ iOS derlemesi macOS ve Apple geliştirici hesabı gerektirdiği için CI'da yok.
 - `src/filters.js` — aydınlatma düzeltme: görüntü bloklara ayrılır, her bloğun
   %90 parlaklık yüzdeliği yüzey parlaklığı sayılır; ızgara yumuşatılıp
   büyütülür ve her piksel bu arka plana bölünür. Ardından seviye/gama ile kontrast açılır.
+- `src/perspective.js` — belge köşe algılama (Otsu eşikleme + en büyük açık
+  bölge + köşegen uç noktaları) ve homografi ile perspektif düzeltme
+- `src/CropEditor.js` — sürüklenebilir dört köşeli kırpma ekranı (`react-native-svg`)
 - `src/vcard.js` — kartvizit ayrıştırma (düzenli ifadeler + satır sezgileri,
   Türkiye cep numaralarını tanıma) ve RFC 2426 vCard 3.0 üretimi
 - `src/platform/scanner.web.js`, `scanner.native.js` — platforma özel katman;
@@ -84,6 +94,5 @@ iOS derlemesi macOS ve Apple geliştirici hesabı gerektirdiği için CI'da yok.
 
 ## Sonraki adımlar
 
-- Belge kenarı algılama ve perspektif düzeltme (kırpma)
 - Çok sayfalı PDF dışa aktarma
 - Word/OneNote dışa aktarma, sesli okuma
