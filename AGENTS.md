@@ -25,7 +25,8 @@ Run `npm test` and `npx expo export --platform web` before declaring any task do
 ## Project layout
 
 - Single screen in `App.js`; no Expo Router (add it if the app grows more screens).
-- `src/filters.js`, `src/vcard.js`: pure, platform-independent logic, unit tested with `npm test` (Node's test runner).
+- `src/filters.js`, `src/perspective.js`, `src/vcard.js`: pure, platform-independent logic, unit tested with `npm test` (Node's test runner).
+- `src/CropEditor.js`: draggable corner editor shown after an image is picked.
 - `src/platform/scanner.web.js` / `scanner.native.js`: platform layer (pixel access, export, OCR). Keep both files exporting the same API.
 - `public/`: PWA files (`index.html` template, `manifest.webmanifest`, `sw.js`, icons), copied as-is into `dist/` by `expo export`.
 
