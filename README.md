@@ -63,13 +63,13 @@ kaldırır, böylece güncel hâl yeniden kaydedilebilir.
 
 ## Platform farkları
 
-|               | Web / PWA                                                         | Android / iOS                                                          |
-| ------------- | ----------------------------------------------------------------- | ---------------------------------------------------------------------- |
-| Görsel alma   | Kamera veya dosya seçici                                          | Kamera veya galeri (`expo-image-picker`)                               |
-| Piksel işleme | Canvas                                                            | `expo-image-manipulator` + `jpeg-js` (en uzun kenar 1600 px)           |
-| OCR           | Tesseract.js (Türkçe + İngilizce, CDN'den ilk kullanımda iner)    | Google ML Kit, cihaz üstünde (`@react-native-ml-kit/text-recognition`) |
-| Dışa aktarma  | Dosya indirme (PNG, `.vcf`)                                       | Paylaşım menüsü (JPEG, `.vcf`)                                         |
-| Çevrimdışı    | Service worker: uygulama kabuğu ve OCR dosyaları önbelleğe alınır | Doğal olarak çevrimdışı                                                |
+|               | Web / PWA                                                         | Android / iOS                                                             |
+| ------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| Görsel alma   | Canlı kenar algılamalı uygulama içi kamera veya dosya seçici      | Sistem belge tarayıcısı (`expo-camera`) veya galeri (`expo-image-picker`) |
+| Piksel işleme | Canvas                                                            | `expo-image-manipulator` + `jpeg-js` (en uzun kenar 1600 px)              |
+| OCR           | Tesseract.js (Türkçe + İngilizce, CDN'den ilk kullanımda iner)    | Google ML Kit, cihaz üstünde (`@react-native-ml-kit/text-recognition`)    |
+| Dışa aktarma  | Dosya indirme (PNG, `.vcf`)                                       | Paylaşım menüsü (JPEG, `.vcf`)                                            |
+| Çevrimdışı    | Service worker: uygulama kabuğu ve OCR dosyaları önbelleğe alınır | Doğal olarak çevrimdışı                                                   |
 
 > **Not:** Mobilde OCR, ML Kit yerel modülü gerektirdiği için **Expo Go'da çalışmaz**;
 > geliştirme derlemesi gerekir (`npx expo run:android` / `npx expo run:ios` veya
