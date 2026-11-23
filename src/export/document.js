@@ -1,8 +1,9 @@
-// Assembles a scan's pages into a PDF. JPEG encoding is injected so the same
-// code runs on web and native (and in tests).
+// Turns a scan's pages into files. JPEG encoding is injected so the same code
+// runs on web and native (and in tests).
 import { buildPdf } from './pdf.js';
 
-export async function scanToPdf(pages, { renderPage, encodeJpeg, title, onProgress }) {
+// Render every page and encode it: [{ jpeg, width, height }].
+export async function renderPagesToJpeg(pages, { renderPage, encodeJpeg, onProgress }) {
   const images = [];
   for (let i = 0; i < pages.length; i++) {
     onProgress?.(i, pages.length);
@@ -11,5 +12,9 @@ export async function scanToPdf(pages, { renderPage, encodeJpeg, title, onProgre
     const img = renderPage(pages[i]);
     images.push({ jpeg: await encodeJpeg(img), width: img.width, height: img.height });
   }
-  return buildPdf(images, { title });
+  return images;
+}
+
+export async function scanToPdf(pages, { title, ...options }) {
+  return buildPdf(await renderPagesToJpeg(pages, options), { title });
 }

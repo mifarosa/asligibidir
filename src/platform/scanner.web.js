@@ -44,6 +44,16 @@ export async function loadPixels(asset) {
 const toBlob = (img, type = 'image/png', quality) =>
   new Promise((resolve) => toCanvas(img).toBlob(resolve, type, quality));
 
+// Decode stored JPEG bytes back into pixels.
+export async function pixelsFromJpeg(bytes) {
+  const url = URL.createObjectURL(new Blob([bytes], { type: 'image/jpeg' }));
+  try {
+    return await loadPixels({ uri: url });
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
 // Turn pixels into something <Image> can display; free it with releaseRendered.
 export async function renderPixels(img) {
   const blob = await toBlob(img);

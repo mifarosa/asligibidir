@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 
 import { buildVCard, vcardFileName } from './src/contact/vcard';
 import { scanToPdf } from './src/export/document';
+import useHistory from './src/hooks/useHistory';
 import useOcr from './src/hooks/useOcr';
 import usePageImage from './src/hooks/usePageImage';
 import { createPageRenderer } from './src/imaging/pipeline';
@@ -19,10 +20,12 @@ import {
   renderPixels,
   shareVerb,
 } from './src/platform/scanner';
+import { openScan, saveScan, savedScanToPdf } from './src/scanLibrary';
 import { currentPage, initialSession, newPage, sessionReducer } from './src/session';
 import Button from './src/ui/Button';
 import ContactForm from './src/ui/ContactForm';
 import CropEditor from './src/ui/CropEditor';
+import HistoryList from './src/ui/HistoryList';
 import PageStrip from './src/ui/PageStrip';
 import PageView from './src/ui/PageView';
 import Segmented from './src/ui/Segmented';
@@ -68,6 +71,7 @@ export default function App() {
   const editing = session.cropping ? null : page;
   const image = usePageImage(renderer, editing, filterKey, showOriginal);
   const ocr = useOcr(mode.readsContact && editing ? image.final : null);
+  const history = useHistory();
   useReleaseRemovedPages(session.pages, renderer);
 
   // Run an async action with a progress notice; failures end up in the notice.
@@ -129,6 +133,36 @@ export default function App() {
       await exportFile(pdf, `${mode.prefix}-${timestamp()}.pdf`, 'application/pdf');
       setNotice('');
     });
+
+  const onSave = () =>
+    run('Kaydediliyor…', 'Kaydedilemedi', async () => {
+      const meta = await saveScan(session.pages, {
+        mode,
+        renderPage: (p) => renderer.render(p, filterFor(p)),
+        store: history,
+        onProgress: (i, n) => setNotice(`Kaydediliyor… sayfa ${i + 1}/${n}`),
+      });
+      dispatch({ type: 'markSaved', id: meta.id });
+      setNotice('Geçmişe kaydedildi.');
+    });
+
+  const onOpenScan = (meta) =>
+    run('Açılıyor…', 'Tarama açılamadı', async () => {
+      const pages = await openScan(meta, history);
+      setShowOriginal(false);
+      setModeKey(meta.mode);
+      dispatch({ type: 'openScan', pages, id: meta.id });
+      setNotice('');
+    });
+
+  const onSavedPdf = (meta) =>
+    run('PDF hazırlanıyor…', 'PDF oluşturulamadı', async () => {
+      const pdf = await savedScanToPdf(meta, history);
+      await exportFile(pdf, `${modeByKey(meta.mode).prefix}-${timestamp()}.pdf`, 'application/pdf');
+      setNotice('');
+    });
+
+  const onDeleteScan = (meta) => run('', 'Silinemedi', () => history.remove(meta));
 
   const onExportVCard = (contact) =>
     run('', 'Kişi kartı oluşturulamadı', () =>
@@ -217,12 +251,20 @@ export default function App() {
           />
         )}
 
-        {multiPage && editing && (
+        {editing && (
           <View style={layout.row}>
+            {multiPage && (
+              <Button
+                title={`PDF olarak ${shareVerb} (${session.pages.length} sayfa)`}
+                onPress={onExportPdf}
+                disabled={busy}
+              />
+            )}
             <Button
-              title={`PDF olarak ${shareVerb} (${session.pages.length} sayfa)`}
-              onPress={onExportPdf}
-              disabled={busy}
+              title={session.savedAs ? 'Kaydedildi ✓' : 'Geçmişe kaydet'}
+              onPress={onSave}
+              disabled={busy || !!session.savedAs}
+              variant="outline"
             />
           </View>
         )}
@@ -233,6 +275,16 @@ export default function App() {
             ocrText={ocr.text}
             onExport={onExportVCard}
             exportLabel={`Kişi kartını ${shareVerb} (.vcf)`}
+          />
+        )}
+        {!hasPages && (
+          <HistoryList
+            scans={history.scans}
+            onOpen={onOpenScan}
+            onPdf={onSavedPdf}
+            onDelete={onDeleteScan}
+            pdfLabel={`PDF ${shareVerb}`}
+            disabled={busy}
           />
         )}
       </ScrollView>

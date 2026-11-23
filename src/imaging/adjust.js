@@ -103,3 +103,36 @@ export function sharpen(
   }
   return { data: out, width: img.width, height: img.height };
 }
+
+// Shrink so the longer side is at most maxSide, averaging the source pixels
+// each output pixel covers (good quality for thumbnails).
+export function downscale(img, maxSide) {
+  const scale = Math.min(1, maxSide / Math.max(img.width, img.height));
+  if (scale === 1) return img;
+  const w = Math.max(1, Math.round(img.width * scale));
+  const h = Math.max(1, Math.round(img.height * scale));
+  const out = new Uint8ClampedArray(w * h * 4);
+  const { data, width: sw, height: sh } = img;
+  for (let y = 0; y < h; y++) {
+    const y0 = Math.floor((y * sh) / h);
+    const y1 = Math.max(y0 + 1, Math.floor(((y + 1) * sh) / h));
+    for (let x = 0; x < w; x++) {
+      const x0 = Math.floor((x * sw) / w);
+      const x1 = Math.max(x0 + 1, Math.floor(((x + 1) * sw) / w));
+      let r = 0;
+      let g = 0;
+      let b = 0;
+      for (let yy = y0; yy < y1; yy++) {
+        for (let xx = x0; xx < x1; xx++) {
+          const i = (yy * sw + xx) * 4;
+          r += data[i];
+          g += data[i + 1];
+          b += data[i + 2];
+        }
+      }
+      const n = (y1 - y0) * (x1 - x0);
+      out.set([r / n, g / n, b / n, 255], (y * w + x) * 4);
+    }
+  }
+  return { data: out, width: w, height: h };
+}

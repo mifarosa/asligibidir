@@ -29,6 +29,15 @@ birleştirir. Her sayfa, yönüne uygun (dikey/yatay) bir A4'e oturtulur. PDF,
 harici kütüphane olmadan `src/export/pdf.js` ile üretilir: her sayfa JPEG
 olarak olduğu gibi gömülür.
 
+## Tarama geçmişi
+
+"Geçmişe kaydet" taramanın bitmiş sayfalarını cihazda saklar (web/PWA'da
+tarayıcının IndexedDB'si, mobilde uygulamanın belge klasörü; hiçbir şey sunucuya
+gitmez). Başlangıç ekranındaki **Geçmiş** listesinden kayıt açılıp düzenlenebilir,
+doğrudan PDF olarak indirilebilir/paylaşılabilir veya silinebilir (silme iki
+dokunuş ister). Kayıttan sonra yapılan her düzenleme "Kaydedildi" durumunu
+kaldırır, böylece güncel hâl yeniden kaydedilebilir.
+
 ## Modlar
 
 | Mod             | Ne yapar                                                                                                                                                       |
@@ -102,6 +111,8 @@ iOS derlemesi macOS ve Apple geliştirici hesabı gerektirdiği için CI'da yok.
 App.js                 ekranı oluşturan ince katman (durum + bileşenler)
 src/
   session.js           tarama oturumu: sayfalar ve her sayfanın düzenlemeleri (reducer)
+  history.js           geçmiş kayıtlarının üst verisi (başlık, tarih)
+  scanLibrary.js       taramayı geçmişe kaydetme, geri açma, geçmişten PDF
   modes.js             modlar ve varsayılan filtreleri
   imaging/             saf görüntü işleme (platformdan bağımsız, testli)
     filters.js         aydınlatma düzeltme, gri, siyah-beyaz
@@ -110,9 +121,9 @@ src/
     pipeline.js        kırp → netleştir → filtre → döndür; aşama aşama önbellekli
   contact/             kartvizit ayrıştırma, vCard ve form dönüşümleri
   export/              PDF yazıcısı ve sayfaları PDF'e dönüştürme
-  hooks/               usePageImage (sayfayı işler), useOcr (metni okur)
-  ui/                  bileşenler: CropEditor, PageView, PageStrip, ContactForm, Button, Segmented, tema
-  platform/            web/mobil farkları: piksel erişimi, dışa aktarma, OCR, görsel seçici
+  hooks/               usePageImage (sayfayı işler), useOcr (metni okur), useHistory
+  ui/                  bileşenler: CropEditor, PageView, PageStrip, HistoryList, ContactForm, Button, Segmented, tema
+  platform/            web/mobil farkları: piksel erişimi, dışa aktarma, OCR, görsel seçici, depolama
 ```
 
 - **Aydınlatma düzeltme:** Görüntü bloklara ayrılır ve her bloğun %90 parlaklık

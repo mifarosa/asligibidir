@@ -33,6 +33,12 @@ export async function loadPixels(asset) {
   return { data: new Uint8ClampedArray(data.buffer, data.byteOffset, data.length), width, height };
 }
 
+// Decode stored JPEG bytes back into pixels.
+export async function pixelsFromJpeg(bytes) {
+  const { data, width, height } = jpeg.decode(bytes, { useTArray: true, formatAsRGBA: true });
+  return { data: new Uint8ClampedArray(data.buffer, data.byteOffset, data.length), width, height };
+}
+
 export async function encodeJpeg(img, quality = 0.9) {
   const { data } = jpeg.encode({ data: img.data, width: img.width, height: img.height }, quality * 100);
   return new Uint8Array(data);

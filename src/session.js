@@ -1,5 +1,7 @@
 // State of the current scan: its pages and the edits made to each. Pure, so
 // it is unit tested; images live in `page.source` and are never copied here.
+// `savedAs` is the history id the pages were last saved as; any change to the
+// pages clears it.
 //
 // page = {
 //   id, source: { pixels, rendered },  // photo as picked, and its display copy
@@ -9,7 +11,7 @@
 //   filter,                            // FILTERS key, or null for the mode's default
 // }
 
-export const initialSession = { pages: [], current: -1, cropping: false };
+export const initialSession = { pages: [], current: -1, cropping: false, savedAs: null };
 
 let nextId = 1;
 
@@ -24,13 +26,17 @@ function updateCurrent(s, fn) {
   if (!page) return s;
   const pages = s.pages.slice();
   pages[s.current] = { ...page, ...fn(page) };
-  return { ...s, pages };
+  return { ...s, pages, savedAs: null };
 }
 
 export function sessionReducer(s, action) {
   switch (action.type) {
     case 'addPage':
-      return { pages: [...s.pages, action.page], current: s.pages.length, cropping: true };
+      return { pages: [...s.pages, action.page], current: s.pages.length, cropping: true, savedAs: null };
+    case 'openScan':
+      return { pages: action.pages, current: 0, cropping: false, savedAs: action.id };
+    case 'markSaved':
+      return { ...s, savedAs: action.id };
     case 'reset':
       return initialSession;
     case 'selectPage':
@@ -44,7 +50,7 @@ export function sessionReducer(s, action) {
         s.current >= action.index && s.current > 0 ? s.current - 1 : s.current,
         pages.length - 1,
       );
-      return { pages, current, cropping: false };
+      return { pages, current, cropping: false, savedAs: null };
     }
     case 'moveCorner':
       return updateCurrent(s, (p) => ({

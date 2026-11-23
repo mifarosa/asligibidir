@@ -69,3 +69,20 @@ test('contact form round-trips', () => {
   };
   assert.deepEqual(formToContact(contactToForm(contact)), contact);
 });
+
+test('savedAs survives navigation but not edits', () => {
+  const opened = sessionReducer(initialSession, {
+    type: 'openScan',
+    id: 'abc',
+    pages: [newPage({}, quad, false), newPage({}, quad, false)],
+  });
+  assert.deepEqual([opened.current, opened.cropping, opened.savedAs], [0, false, 'abc']);
+  assert.equal(sessionReducer(opened, { type: 'selectPage', index: 1 }).savedAs, 'abc');
+  assert.equal(sessionReducer(opened, { type: 'rotate', turns: 1 }).savedAs, null);
+  assert.equal(sessionReducer(opened, { type: 'removePage', index: 1 }).savedAs, null);
+  const resaved = sessionReducer(sessionReducer(opened, { type: 'setSharpen', level: 1 }), {
+    type: 'markSaved',
+    id: 'def',
+  });
+  assert.equal(resaved.savedAs, 'def');
+});
