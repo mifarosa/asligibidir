@@ -15,7 +15,9 @@ import {
 import { StatusBar } from 'expo-status-bar';
 import * as ImagePicker from 'expo-image-picker';
 
+import CropEditor from './src/CropEditor';
 import { documentScan, whiteboard } from './src/filters';
+import { detectDocument, fullQuad, warpPerspective } from './src/perspective';
 import { buildVCard, formatPhoneLine, parseContact, parsePhoneLine, vcardFileName } from './src/vcard';
 import {
   exportImage,
@@ -109,7 +111,11 @@ export default function App() {
   const c = dark ? COLORS.dark : COLORS.light;
 
   const [mode, setMode] = useState('document');
-  const [original, setOriginal] = useState(null); // { pixels, rendered }
+  const [source, setSource] = useState(null); // full photo: { pixels, rendered }
+  const [quad, setQuad] = useState(null); // page corners in source pixels
+  const [cropping, setCropping] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const [original, setOriginal] = useState(null); // cropped, straightened page: { pixels, rendered }
   const [processed, setProcessed] = useState(null); // pixels
   const [rendered, setRendered] = useRendered();
   const [showOriginal, setShowOriginal] = useState(false);
@@ -124,7 +130,9 @@ export default function App() {
   const modeInfo = MODES.find((m) => m.key === mode);
 
   useEffect(() => {
-    if (!original) return;
+    // Wait until the page has been cropped; this also cancels work in flight
+    // when the user goes back to adjust the corners.
+    if (!original || cropping) return;
     const run = ++runRef.current;
     let cancelled = false;
     const isStale = () => cancelled || run !== runRef.current;
@@ -167,7 +175,7 @@ export default function App() {
     return () => {
       cancelled = true;
     };
-  }, [original, mode, setRendered]);
+  }, [original, mode, cropping, setRendered]);
 
   const pick = async (source) => {
     try {
@@ -185,14 +193,57 @@ export default function App() {
       setStatus('Görsel yükleniyor…');
       const asset = result.assets[0];
       const pixels = await loadPixels(asset);
-      releaseRendered(original?.rendered);
-      setShowOriginal(false);
-      setOriginal({ pixels, rendered: await renderPixels(pixels) });
+      const view = await renderPixels(pixels);
+      // Invalidate any filtering/OCR still running for the previous photo.
+      runRef.current++;
+      releaseRendered(source?.rendered);
+      setSource({ pixels, rendered: view });
+      const detected = detectDocument(pixels);
+      setQuad(detected ?? fullQuad(pixels));
+      setCropping(true);
+      setBusy(false);
+      setStatus(
+        detected
+          ? 'Kenarlar bulundu. Köşeleri sürükleyerek düzeltebilirsiniz.'
+          : 'Kenarlar bulunamadı. Köşeleri belgenin köşelerine sürükleyin.',
+      );
     } catch (err) {
       console.error(err);
       setBusy(false);
       setStatus(`Görsel açılamadı: ${err.message}`);
     }
+  };
+
+  const moveCorner = useCallback((i, point) => {
+    setQuad((prev) => prev.map((p, j) => (j === i ? point : p)));
+  }, []);
+
+  const confirmCrop = async (useWhole) => {
+    try {
+      setBusy(true);
+      setStatus('Kırpılıyor…');
+      await nextTick();
+      const corners = useWhole ? fullQuad(source.pixels) : quad;
+      if (useWhole) setQuad(corners);
+      const { width, height } = source.pixels;
+      const pixels = warpPerspective(source.pixels, corners, { maxSide: Math.max(width, height) });
+      const view = await renderPixels(pixels);
+      releaseRendered(original?.rendered);
+      setShowOriginal(false);
+      setCropping(false);
+      setOriginal({ pixels, rendered: view });
+    } catch (err) {
+      console.error(err);
+      setBusy(false);
+      setStatus(`Kırpılamadı: ${err.message}`);
+    }
+  };
+
+  const editCrop = () => {
+    runRef.current++;
+    setBusy(false);
+    setStatus('Köşeleri sürükleyerek düzeltin.');
+    setCropping(true);
   };
 
   const onExportImage = async () => {
@@ -212,12 +263,16 @@ export default function App() {
     }
   };
 
-  const shown = showOriginal ? original?.rendered : rendered;
+  const shown = cropping ? null : showOriginal ? original?.rendered : rendered;
 
   return (
     <View style={[styles.root, { backgroundColor: c.bg }]}>
       <StatusBar style={dark ? 'light' : 'dark'} />
-      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        scrollEnabled={!dragging}
+      >
         <Text style={[styles.h1, { color: c.text }]}>Aslı Gibidir</Text>
         <Text style={[styles.muted, { color: c.muted }]}>Belge, beyaz tahta ve kartvizit tarayıcı</Text>
 
@@ -254,6 +309,29 @@ export default function App() {
           <Text style={[styles.muted, { color: c.muted, flex: 1 }]}>{status}</Text>
         </View>
 
+        {cropping && source && quad && (
+          <View>
+            <Text style={[styles.h2, { color: c.text, marginTop: 0 }]}>Kırpma</Text>
+            <CropEditor
+              image={source.rendered}
+              quad={quad}
+              onMove={moveCorner}
+              onDragChange={setDragging}
+              colors={c}
+            />
+            <View style={styles.row}>
+              <Button title="Kırp ve devam et" onPress={() => confirmCrop(false)} disabled={busy} colors={c} />
+              <Button
+                title="Tamamını kullan"
+                onPress={() => confirmCrop(true)}
+                disabled={busy}
+                colors={c}
+                variant="outline"
+              />
+            </View>
+          </View>
+        )}
+
         {shown && (
           <View>
             <View style={styles.switchRow}>
@@ -273,11 +351,12 @@ export default function App() {
                 disabled={!rendered || !processed}
                 colors={c}
               />
+              <Button title="Köşeleri düzenle" onPress={editCrop} colors={c} variant="outline" />
             </View>
           </View>
         )}
 
-        {mode === 'card' && original && (
+        {mode === 'card' && original && !cropping && (
           <View>
             <Text style={[styles.h2, { color: c.text }]}>Kişi bilgileri</Text>
             <Text style={[styles.muted, { color: c.muted }]}>
