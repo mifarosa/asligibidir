@@ -4,6 +4,21 @@ Belge, beyaz tahta ve kartvizit tarayıcı. Expo (React Native) ile yazıldı;
 aynı kod **PWA** (tarayıcıdan "Ana ekrana ekle"), **Android** ve **iOS** olarak
 çalışır. Görüntüler cihazda işlenir; sunucuya yüklenmez.
 
+## Kamera ve canlı kenar algılama
+
+"Fotoğraf çek" platformun sunduğu en iyi kamerayı açar:
+
+- **Android / iOS:** Telefonun yerleşik belge tarayıcısı (Android'de ML Kit,
+  iOS'ta VisionKit; `expo-camera`'nın `scanDocumentAsync`'i). Canlı kenar
+  algılama, otomatik çekim ve çok sayfa tarama sistem tarafından yapılır; gelen
+  sayfalar zaten kırpılmış ve düzeltilmiş olduğu için doğrudan düzenleme ekranına
+  eklenir. Tarayıcı yoksa (ör. Expo Go) sistem kamerası açılır.
+- **Web / PWA:** Uygulama içi kamera. Her ~200 ms'de küçük bir kare üzerinde
+  belge aranır ve çerçeve canlı çizilir; çerçeve ~1,2 sn sabit kalınca otomatik
+  çekilir (kapatılabilir, "Çek" ile elle de çekilebilir). Çekilen fotoğraf
+  bulunan köşelerle kırpma ekranına gelir. Kamera izni yoksa sistem
+  kamerası/dosya seçici kullanılır.
+
 ## Kırpma ve perspektif düzeltme
 
 Fotoğraf seçildikten sonra belge (sayfa, kart veya tahta) kenarları otomatik
@@ -119,11 +134,12 @@ src/
     perspective.js     köşe algılama ve perspektif düzeltme
     adjust.js          90° döndürme, netleştirme (unsharp mask)
     pipeline.js        kırp → netleştir → filtre → döndür; aşama aşama önbellekli
+    stability.js       canlı kamerada çerçevenin sabit kaldığını anlama
   contact/             kartvizit ayrıştırma, vCard ve form dönüşümleri
   export/              PDF yazıcısı ve sayfaları PDF'e dönüştürme
   hooks/               usePageImage (sayfayı işler), useOcr (metni okur), useHistory
   ui/                  bileşenler: CropEditor, PageView, PageStrip, HistoryList, ContactForm, Button, Segmented, tema
-  platform/            web/mobil farkları: piksel erişimi, dışa aktarma, OCR, görsel seçici, depolama
+  platform/            web/mobil farkları: piksel erişimi, dışa aktarma, OCR, kamera, görsel seçici, depolama
 ```
 
 - **Aydınlatma düzeltme:** Görüntü bloklara ayrılır ve her bloğun %90 parlaklık

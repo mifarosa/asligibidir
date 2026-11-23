@@ -33,6 +33,14 @@ export function sessionReducer(s, action) {
   switch (action.type) {
     case 'addPage':
       return { pages: [...s.pages, action.page], current: s.pages.length, cropping: true, savedAs: null };
+    case 'addPages':
+      // Pages that arrive already cropped (e.g. from the OS document scanner).
+      return {
+        pages: [...s.pages, ...action.pages],
+        current: s.pages.length,
+        cropping: false,
+        savedAs: null,
+      };
     case 'openScan':
       return { pages: action.pages, current: 0, cropping: false, savedAs: action.id };
     case 'markSaved':

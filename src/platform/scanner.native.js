@@ -21,16 +21,15 @@ function cacheFile(baseName, ext) {
 }
 
 export async function loadPixels(asset) {
-  const longest = Math.max(asset.width || 0, asset.height || 0);
-  const ctx = ImageManipulator.manipulate(asset.uri);
-  if (!longest || longest > MAX_SIDE) {
-    ctx.resize(asset.width >= asset.height ? { width: MAX_SIDE } : { height: MAX_SIDE });
+  // Picker assets carry their size; others (e.g. system scanner pages) don't,
+  // so read it from the decoded image before deciding how far to shrink.
+  let ref = await ImageManipulator.manipulate(asset.uri).renderAsync();
+  if (Math.max(ref.width, ref.height) > MAX_SIDE) {
+    const size = ref.width >= ref.height ? { width: MAX_SIDE } : { height: MAX_SIDE };
+    ref = await ImageManipulator.manipulate(ref).resize(size).renderAsync();
   }
-  const ref = await ctx.renderAsync();
   const saved = await ref.saveAsync({ format: SaveFormat.JPEG, compress: 0.95 });
-  const bytes = await new File(saved.uri).bytes();
-  const { data, width, height } = jpeg.decode(bytes, { useTArray: true, formatAsRGBA: true });
-  return { data: new Uint8ClampedArray(data.buffer, data.byteOffset, data.length), width, height };
+  return pixelsFromJpeg(await new File(saved.uri).bytes());
 }
 
 // Decode stored JPEG bytes back into pixels.

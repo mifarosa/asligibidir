@@ -10,6 +10,7 @@ import usePageImage from './src/hooks/usePageImage';
 import { createPageRenderer } from './src/imaging/pipeline';
 import { detectDocument, fullQuad } from './src/imaging/perspective';
 import { MODES, modeByKey } from './src/modes';
+import { cameraStrategy, LiveCamera, scanDocuments } from './src/platform/camera';
 import { pickImage } from './src/platform/picker';
 import {
   encodeJpeg,
@@ -33,13 +34,16 @@ import { layout, text, useColors } from './src/ui/theme';
 
 const timestamp = () => new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-');
 
-// Decode a picked photo and find the page in it.
-async function photoToPage(asset) {
-  const pixels = await loadPixels(asset);
+// Build a page from pixels, finding the page outline unless one is given.
+async function pixelsToPage(pixels, quad = detectDocument(pixels)) {
   const rendered = await renderPixels(pixels);
-  const detected = detectDocument(pixels);
-  return newPage({ pixels, rendered }, detected ?? fullQuad(pixels), !!detected);
+  return newPage({ pixels, rendered }, quad ?? fullQuad(pixels), !!quad);
 }
+
+const cropHint = (page) =>
+  page.detected
+    ? 'Kenarlar bulundu. Köşeleri sürükleyerek düzeltebilirsiniz.'
+    : 'Kenarlar bulunamadı. Köşeleri belgenin köşelerine sürükleyin.';
 
 // Frees display copies and cached renders of pages that left the scan.
 function useReleaseRemovedPages(pages, renderer) {
@@ -61,6 +65,8 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [showOriginal, setShowOriginal] = useState(false);
   const [dragging, setDragging] = useState(false);
+  // While set, the in-app camera is open; holds whether its photo starts a new scan.
+  const [camera, setCamera] = useState(null);
 
   const renderer = useMemo(createPageRenderer, []);
   const page = currentPage(session);
@@ -68,7 +74,8 @@ export default function App() {
   // A business card is a single page; documents and boards can have many.
   const multiPage = !mode.readsContact;
   const hasPages = session.pages.length > 0;
-  const editing = session.cropping ? null : page;
+  // The page shown in the editor (not while cropping or using the camera).
+  const editing = session.cropping || camera ? null : page;
   const image = usePageImage(renderer, editing, filterKey, showOriginal);
   const ocr = useOcr(mode.readsContact && editing ? image.final : null);
   const history = useHistory();
@@ -88,21 +95,68 @@ export default function App() {
     }
   };
 
-  // `newScan` discards the current pages; otherwise the photo becomes a new page.
-  const addPhoto = (source, { newScan }) =>
+  // Add a page to the scan; `newScan` first discards the current pages.
+  const addPage = (added, newScan) => {
+    setShowOriginal(false);
+    if (newScan) dispatch({ type: 'reset' });
+    dispatch({ type: 'addPage', page: added });
+    setNotice(cropHint(added));
+  };
+
+  const fromLibrary = (newScan) =>
     run('Görsel yükleniyor…', 'Görsel açılamadı', async () => {
-      const asset = await pickImage(source);
+      const asset = await pickImage('library');
       if (!asset) return setNotice('');
-      const added = await photoToPage(asset);
+      addPage(await pixelsToPage(await loadPixels(asset)), newScan);
+    });
+
+  // The best camera the platform offers: the OS document scanner, the in-app
+  // live camera, or the system camera through the picker.
+  const fromCamera = (newScan) => {
+    const strategy = cameraStrategy();
+    if (strategy === 'live') return setCamera({ newScan });
+    if (strategy === 'picker') {
+      return run('Görsel yükleniyor…', 'Fotoğraf alınamadı', async () => {
+        const asset = await pickImage('camera');
+        if (!asset) return setNotice('');
+        addPage(await pixelsToPage(await loadPixels(asset)), newScan);
+      });
+    }
+    return run('Tarayıcı açılıyor…', 'Tarama başarısız', async () => {
+      const scanned = await scanDocuments();
+      if (!scanned) return setNotice('');
+      const pages = [];
+      for (const asset of scanned) {
+        const pixels = await loadPixels(asset);
+        // The scanner already cropped and straightened each page.
+        pages.push(await pixelsToPage(pixels, fullQuad(pixels)));
+      }
       setShowOriginal(false);
       if (newScan) dispatch({ type: 'reset' });
-      dispatch({ type: 'addPage', page: added });
-      setNotice(
-        added.detected
-          ? 'Kenarlar bulundu. Köşeleri sürükleyerek düzeltebilirsiniz.'
-          : 'Kenarlar bulunamadı. Köşeleri belgenin köşelerine sürükleyin.',
-      );
+      dispatch({ type: 'addPages', pages });
+      setNotice('');
     });
+  };
+
+  const onCameraCapture = ({ pixels, quad }) => {
+    const { newScan } = camera;
+    setCamera(null);
+    run('İşleniyor…', 'Fotoğraf işlenemedi', async () =>
+      addPage(await pixelsToPage(pixels, quad ?? undefined), newScan),
+    );
+  };
+
+  const onCameraError = (err) => {
+    // No permission or no camera: fall back to the system camera / file input.
+    console.warn('Live camera unavailable', err);
+    const { newScan } = camera;
+    setCamera(null);
+    run('Görsel yükleniyor…', 'Fotoğraf alınamadı', async () => {
+      const asset = await pickImage('camera');
+      if (!asset) return setNotice('Kamera açılamadı.');
+      addPage(await pixelsToPage(await loadPixels(asset)), newScan);
+    });
+  };
 
   const moveCorner = useCallback((index, point) => dispatch({ type: 'moveCorner', index, point }), []);
 
@@ -197,12 +251,8 @@ export default function App() {
             <Button title="Yeni tarama" onPress={() => dispatch({ type: 'reset' })} variant="outline" />
           ) : (
             <>
-              <Button title="Fotoğraf çek" onPress={() => addPhoto('camera', { newScan: true })} />
-              <Button
-                title="Görsel seç"
-                onPress={() => addPhoto('library', { newScan: true })}
-                variant="outline"
-              />
+              <Button title="Fotoğraf çek" onPress={() => fromCamera(true)} disabled={!!camera} />
+              <Button title="Görsel seç" onPress={() => fromLibrary(true)} variant="outline" />
             </>
           )}
         </View>
@@ -212,7 +262,11 @@ export default function App() {
           <Text style={[text.body, { color: c.muted, flex: 1 }]}>{status}</Text>
         </View>
 
-        {session.cropping && page && (
+        {camera && LiveCamera && (
+          <LiveCamera onCapture={onCameraCapture} onCancel={() => setCamera(null)} onError={onCameraError} />
+        )}
+
+        {!camera && session.cropping && page && (
           <CropEditor
             image={page.source.rendered}
             quad={page.quad}
@@ -223,12 +277,12 @@ export default function App() {
           />
         )}
 
-        {multiPage && hasPages && !session.cropping && (
+        {multiPage && hasPages && editing && (
           <PageStrip
             pages={session.pages}
             current={session.current}
             onSelect={(index) => dispatch({ type: 'selectPage', index })}
-            onAdd={(source) => addPhoto(source, { newScan: false })}
+            onAdd={(source) => (source === 'camera' ? fromCamera(false) : fromLibrary(false))}
             onRemove={(index) => dispatch({ type: 'removePage', index })}
             disabled={busy}
           />
@@ -277,7 +331,7 @@ export default function App() {
             exportLabel={`Kişi kartını ${shareVerb} (.vcf)`}
           />
         )}
-        {!hasPages && (
+        {!hasPages && !camera && (
           <HistoryList
             scans={history.scans}
             onOpen={onOpenScan}

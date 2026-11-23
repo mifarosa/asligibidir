@@ -19,6 +19,7 @@
     "@react-native-ml-kit/text-recognition": "^2.0.0",
     "buffer": "^6.0.3",
     "expo": "~58.0.19",
+    "expo-camera": "~58.0.12",
     "expo-file-system": "~58.0.11",
     "expo-image-manipulator": "~58.0.15",
     "expo-image-picker": "~58.0.10",

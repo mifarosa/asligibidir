@@ -86,3 +86,12 @@ test('savedAs survives navigation but not edits', () => {
   });
   assert.equal(resaved.savedAs, 'def');
 });
+
+test('addPages appends ready pages without opening the crop editor', () => {
+  const s = run([
+    { type: 'addPage', page: newPage({}, quad, true) },
+    { type: 'finishCrop' },
+    { type: 'addPages', pages: [newPage({}, quad, true), newPage({}, quad, true)] },
+  ]);
+  assert.deepEqual([s.pages.length, s.current, s.cropping], [3, 1, false]);
+});

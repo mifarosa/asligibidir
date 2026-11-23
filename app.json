@@ -35,6 +35,14 @@
           "photosPermission": "Taramak istediğiniz görselleri seçmek için fotoğraflarınıza erişim gerekiyor.",
           "cameraPermission": "Belge, tahta ve kartvizit fotoğrafı çekmek için kamera erişimi gerekiyor."
         }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Belge, tahta ve kartvizit taramak için kamera erişimi gerekiyor.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
       ]
     ]
   }
