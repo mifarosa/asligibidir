@@ -41,10 +41,13 @@ export async function loadPixels(asset) {
   return { data, width, height };
 }
 
-// Turn pixels into something <Image> can display (and the exporters can reuse).
+const toBlob = (img, type = 'image/png', quality) =>
+  new Promise((resolve) => toCanvas(img).toBlob(resolve, type, quality));
+
+// Turn pixels into something <Image> can display; free it with releaseRendered.
 export async function renderPixels(img) {
-  const blob = await new Promise((resolve) => toCanvas(img).toBlob(resolve, 'image/png'));
-  return { uri: URL.createObjectURL(blob), width: img.width, height: img.height, blob };
+  const blob = await toBlob(img);
+  return { uri: URL.createObjectURL(blob), width: img.width, height: img.height };
 }
 
 export function releaseRendered(rendered) {
@@ -62,8 +65,8 @@ function download(blob, name) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-export async function exportImage(rendered, baseName) {
-  download(rendered.blob, `${baseName}.png`);
+export async function exportImage(img, baseName) {
+  download(await toBlob(img), `${baseName}.png`);
 }
 
 export async function exportVCard(text, fileName) {
@@ -86,7 +89,7 @@ function loadTesseract() {
   return tesseractPromise;
 }
 
-export async function recognizeText(img, _rendered, onProgress) {
+export async function recognizeText(img, onProgress) {
   onProgress?.('OCR hazırlanıyor…');
   const Tesseract = await loadTesseract();
   const { data } = await Tesseract.recognize(toCanvas(img), OCR_LANGS, {

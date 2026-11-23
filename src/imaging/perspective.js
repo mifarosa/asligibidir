@@ -105,10 +105,10 @@ export function detectDocument(img, { size = 200 } = {}) {
       count++;
       const x = p % w;
       const y = (p - x) / w;
-      if (x > 0 && mask[p - 1] && !label[p - 1]) (label[p - 1] = next), (stack[top++] = p - 1);
-      if (x < w - 1 && mask[p + 1] && !label[p + 1]) (label[p + 1] = next), (stack[top++] = p + 1);
-      if (y > 0 && mask[p - w] && !label[p - w]) (label[p - w] = next), (stack[top++] = p - w);
-      if (y < h - 1 && mask[p + w] && !label[p + w]) (label[p + w] = next), (stack[top++] = p + w);
+      if (x > 0 && mask[p - 1] && !label[p - 1]) ((label[p - 1] = next), (stack[top++] = p - 1));
+      if (x < w - 1 && mask[p + 1] && !label[p + 1]) ((label[p + 1] = next), (stack[top++] = p + 1));
+      if (y > 0 && mask[p - w] && !label[p - w]) ((label[p - w] = next), (stack[top++] = p - w));
+      if (y < h - 1 && mask[p + w] && !label[p + w]) ((label[p + w] = next), (stack[top++] = p + w));
     }
     if (count > bestCount) {
       bestCount = count;
@@ -122,17 +122,20 @@ export function detectDocument(img, { size = 200 } = {}) {
   if (frac < 0.12 || frac > 0.97) return null;
 
   let tl, tr, br, bl;
-  let minSum = Infinity, maxSum = -Infinity, minDiff = Infinity, maxDiff = -Infinity;
+  let minSum = Infinity,
+    maxSum = -Infinity,
+    minDiff = Infinity,
+    maxDiff = -Infinity;
   for (let p = 0; p < label.length; p++) {
     if (label[p] !== bestLabel) continue;
     const x = p % w;
     const y = (p - x) / w;
     const s = x + y;
     const d = x - y;
-    if (s < minSum) (minSum = s), (tl = { x, y });
-    if (s > maxSum) (maxSum = s), (br = { x, y });
-    if (d > maxDiff) (maxDiff = d), (tr = { x, y });
-    if (d < minDiff) (minDiff = d), (bl = { x, y });
+    if (s < minSum) ((minSum = s), (tl = { x, y }));
+    if (s > maxSum) ((maxSum = s), (br = { x, y }));
+    if (d > maxDiff) ((maxDiff = d), (tr = { x, y }));
+    if (d < minDiff) ((minDiff = d), (bl = { x, y }));
   }
 
   // Map the centres of the small-image pixels back to full resolution.
@@ -192,10 +195,11 @@ export function applyHomography(H, x, y) {
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 
 // Output size that keeps the page's real proportions: the longer of each pair
-// of opposite edges, capped so the longest side stays within maxSide.
+// of opposite edges, capped so the longest side stays within maxSide. Corners
+// are pixel centres, so an edge of length d spans d + 1 pixels.
 export function outputSize(quad, maxSide = Infinity) {
-  let w = Math.max(dist(quad[0], quad[1]), dist(quad[3], quad[2]));
-  let h = Math.max(dist(quad[0], quad[3]), dist(quad[1], quad[2]));
+  let w = Math.max(dist(quad[0], quad[1]), dist(quad[3], quad[2])) + 1;
+  let h = Math.max(dist(quad[0], quad[3]), dist(quad[1], quad[2])) + 1;
   const s = Math.min(1, maxSide / Math.max(w, h));
   w = Math.max(1, Math.round(w * s));
   h = Math.max(1, Math.round(h * s));

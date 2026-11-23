@@ -33,11 +33,17 @@ export async function loadPixels(asset) {
   return { data: new Uint8ClampedArray(data.buffer, data.byteOffset, data.length), width, height };
 }
 
-export async function renderPixels(img) {
+async function writeJpeg(img, baseName) {
   const { data } = jpeg.encode({ data: img.data, width: img.width, height: img.height }, 92);
-  const file = cacheFile('tarama', 'jpg');
+  const file = cacheFile(baseName, 'jpg');
   file.create();
   await file.write(new Uint8Array(data));
+  return file;
+}
+
+// Turn pixels into something <Image> can display; free it with releaseRendered.
+export async function renderPixels(img) {
+  const file = await writeJpeg(img, 'tarama');
   return { uri: file.uri, width: img.width, height: img.height, file };
 }
 
@@ -54,9 +60,8 @@ async function share(uri, mimeType, dialogTitle) {
   await Sharing.shareAsync(uri, { mimeType, dialogTitle });
 }
 
-export async function exportImage(rendered, baseName) {
-  const file = cacheFile(baseName, 'jpg');
-  await rendered.file.copy(file);
+export async function exportImage(img, baseName) {
+  const file = await writeJpeg(img, baseName);
   await share(file.uri, 'image/jpeg', 'Görüntüyü paylaş');
 }
 
@@ -68,17 +73,20 @@ export async function exportVCard(text, fileName) {
   await share(file.uri, 'text/vcard', 'Kişi kartını paylaş');
 }
 
-export async function recognizeText(_img, rendered, onProgress) {
+export async function recognizeText(img, onProgress) {
   onProgress?.('Metin okunuyor…');
+  const file = await writeJpeg(img, 'ocr');
   try {
     // Native module: missing in Expo Go, available in development/production builds.
     const TextRecognition = require('@react-native-ml-kit/text-recognition').default;
-    const result = await TextRecognition.recognize(rendered.uri);
+    const result = await TextRecognition.recognize(file.uri);
     return result.text;
   } catch (err) {
     if (/linked|Expo managed/i.test(String(err?.message))) {
       throw new Error('OCR için geliştirme derlemesi gerekiyor (Expo Go desteklemiyor)');
     }
     throw err;
+  } finally {
+    if (file.exists) file.delete();
   }
 }

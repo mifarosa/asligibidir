@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { whiteboard, documentScan } from '../src/filters.js';
+import { whiteboard, documentScan } from '../src/imaging/filters.js';
 
 // Synthetic board photo: left-to-right lighting gradient, a glare blob and a
 // shadowed corner, with a dark marker stroke and a red marker stroke.
@@ -29,7 +29,13 @@ const px = (img, x, y) => Array.from(img.data.subarray((y * img.width + x) * 4, 
 
 test('whiteboard turns uneven surface into white', () => {
   const out = whiteboard(makeBoard());
-  for (const [x, y] of [[10, 10], [230, 170], [170, 50], [30, 150], [80, 40]]) {
+  for (const [x, y] of [
+    [10, 10],
+    [230, 170],
+    [170, 50],
+    [30, 150],
+    [80, 40],
+  ]) {
     for (const c of px(out, x, y)) assert.ok(c >= 240, `surface at ${x},${y} = ${c}`);
   }
 });

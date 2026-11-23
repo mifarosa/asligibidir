@@ -20,15 +20,18 @@ npx expo-doctor             # diagnose dependency and config issues
 npx expo install --fix      # fix incompatible package versions
 ```
 
-Run `npm test` and `npx expo export --platform web` before declaring any task done.
+Run `npm run lint`, `npm test` and `npx expo export --platform web` before declaring any task done.
 
 ## Project layout
 
-- Single screen in `App.js`; no Expo Router (add it if the app grows more screens).
-- `src/filters.js`, `src/perspective.js`, `src/vcard.js`: pure, platform-independent logic, unit tested with `npm test` (Node's test runner).
-- `src/CropEditor.js`: draggable corner editor shown after an image is picked.
-- `src/platform/scanner.web.js` / `scanner.native.js`: platform layer (pixel access, export, OCR). Keep both files exporting the same API.
+- `App.js` composes the single screen; keep logic out of it (no Expo Router; add it if more screens appear).
+- `src/session.js`: scan state (pages + per-page edits) as a pure reducer.
+- `src/imaging/`, `src/contact/`, `src/modes.js`: pure, platform-independent logic, unit tested with `npm test` (Node's test runner). Import siblings with explicit `.js` extensions so Node can run them.
+- `src/hooks/`: React hooks bridging pure logic and the platform layer.
+- `src/ui/`: presentational components; colors and text styles come from `src/ui/theme.js`.
+- `src/platform/*.web.js` / `*.native.js`: platform layer (pixel access, export, OCR). Keep both files exporting the same API.
 - `public/`: PWA files (`index.html` template, `manifest.webmanifest`, `sw.js`, icons), copied as-is into `dist/` by `expo export`.
+- Formatting is Prettier (`npm run format`); CI runs `npm run lint`.
 
 ## Building with EAS
 
