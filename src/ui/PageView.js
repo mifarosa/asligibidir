@@ -1,18 +1,22 @@
 import { Image, StyleSheet, Switch, Text, View } from 'react-native';
 import { SHARPEN_LEVELS } from '../imaging/adjust';
+import { FILTERS } from '../imaging/pipeline';
 import Button from './Button';
 import Segmented from './Segmented';
 import { layout, text, useColors } from './theme';
 
 const SHARPEN_OPTIONS = SHARPEN_LEVELS.map(({ key, label }) => ({ key, label }));
+const FILTER_OPTIONS = Object.entries(FILTERS).map(([key, f]) => ({ key, label: f.label }));
 
-// The processed page with its editing tools: original toggle, rotation,
-// sharpening, crop and export.
+// The processed page with its editing tools: original toggle, filter,
+// rotation, sharpening, crop and export.
 export default function PageView({
   view,
   page,
+  filterKey,
   showOriginal,
   onShowOriginal,
+  onFilter,
   onRotate,
   onSharpen,
   onEditCrop,
@@ -40,7 +44,16 @@ export default function PageView({
         <Button title="Sağa döndür ⟳" onPress={() => onRotate(1)} variant="outline" disabled={busy} />
       </View>
 
-      <Text style={[text.label, { color: c.text }]}>Netleştirme</Text>
+      <Text style={[text.label, { color: c.text }]}>Filtre</Text>
+      <Segmented
+        options={FILTER_OPTIONS}
+        value={filterKey}
+        onChange={onFilter}
+        accessibilityLabel="Filtre"
+        compact
+      />
+
+      <Text style={[text.label, { color: c.text, marginTop: 8 }]}>Netleştirme</Text>
       <Segmented
         options={SHARPEN_OPTIONS}
         value={page.sharpen}

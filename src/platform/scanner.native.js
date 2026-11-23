@@ -33,11 +33,15 @@ export async function loadPixels(asset) {
   return { data: new Uint8ClampedArray(data.buffer, data.byteOffset, data.length), width, height };
 }
 
+export async function encodeJpeg(img, quality = 0.9) {
+  const { data } = jpeg.encode({ data: img.data, width: img.width, height: img.height }, quality * 100);
+  return new Uint8Array(data);
+}
+
 async function writeJpeg(img, baseName) {
-  const { data } = jpeg.encode({ data: img.data, width: img.width, height: img.height }, 92);
   const file = cacheFile(baseName, 'jpg');
   file.create();
-  await file.write(new Uint8Array(data));
+  await file.write(await encodeJpeg(img, 0.92));
   return file;
 }
 
@@ -65,12 +69,13 @@ export async function exportImage(img, baseName) {
   await share(file.uri, 'image/jpeg', 'Görüntüyü paylaş');
 }
 
-export async function exportVCard(text, fileName) {
+// Hand a generated file (text or bytes) to the share sheet.
+export async function exportFile(content, fileName, mimeType) {
   const file = new File(Paths.cache, fileName);
   if (file.exists) file.delete();
   file.create();
-  await file.write(text);
-  await share(file.uri, 'text/vcard', 'Kişi kartını paylaş');
+  await file.write(content);
+  await share(file.uri, mimeType, 'Paylaş');
 }
 
 export async function recognizeText(img, onProgress) {

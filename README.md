@@ -11,6 +11,24 @@ bulunur ve köşeleri işaretlenir. Köşeler sürüklenerek düzeltilebilir; "K
 devam et" eğik çekilmiş belgeyi düz bir dikdörtgene çevirir, "Tamamını kullan"
 fotoğrafın tamamını alır. Sonuç ekranındaki "Köşeleri düzenle" ile geri dönülebilir.
 
+## Düzenleme
+
+Her sayfa için ayrı ayrı:
+
+- **Filtre:** Orijinal, Renkli (tahta için), Gri (belge için), Siyah-beyaz. Varsayılan, seçili moda göre gelir.
+- **Netleştirme:** Kapalı / Hafif / Orta / Güçlü (unsharp mask).
+- **Döndürme:** 90° sola veya sağa.
+- **Orijinali göster:** Kırpılmış ama filtrelenmemiş hâli.
+
+## Çok sayfalı PDF
+
+Belge ve beyaz tahta modlarında "+ Fotoğraf çek" / "+ Görsel ekle" ile sayfa
+eklenir. Sayfalar küçük resimlerden seçilip ayrı ayrı düzenlenebilir ya da
+silinebilir. "PDF olarak indir" (mobilde "paylaş") tüm sayfaları tek bir PDF'te
+birleştirir. Her sayfa, yönüne uygun (dikey/yatay) bir A4'e oturtulur. PDF,
+harici kütüphane olmadan `src/export/pdf.js` ile üretilir: her sayfa JPEG
+olarak olduğu gibi gömülür.
+
 ## Modlar
 
 | Mod             | Ne yapar                                                                                                                                                       |
@@ -91,8 +109,9 @@ src/
     adjust.js          90° döndürme, netleştirme (unsharp mask)
     pipeline.js        kırp → netleştir → filtre → döndür; aşama aşama önbellekli
   contact/             kartvizit ayrıştırma, vCard ve form dönüşümleri
+  export/              PDF yazıcısı ve sayfaları PDF'e dönüştürme
   hooks/               usePageImage (sayfayı işler), useOcr (metni okur)
-  ui/                  bileşenler: CropEditor, PageView, ContactForm, Button, Segmented, tema
+  ui/                  bileşenler: CropEditor, PageView, PageStrip, ContactForm, Button, Segmented, tema
   platform/            web/mobil farkları: piksel erişimi, dışa aktarma, OCR, görsel seçici
 ```
 
@@ -107,5 +126,4 @@ Kod biçimi Prettier ile denetlenir: `npm run lint` (CI'da çalışır), düzelt
 
 ## Sonraki adımlar
 
-- Çok sayfalı PDF dışa aktarma
 - Word/OneNote dışa aktarma, sesli okuma

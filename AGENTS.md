@@ -26,7 +26,7 @@ Run `npm run lint`, `npm test` and `npx expo export --platform web` before decla
 
 - `App.js` composes the single screen; keep logic out of it (no Expo Router; add it if more screens appear).
 - `src/session.js`: scan state (pages + per-page edits) as a pure reducer.
-- `src/imaging/`, `src/contact/`, `src/modes.js`: pure, platform-independent logic, unit tested with `npm test` (Node's test runner). Import siblings with explicit `.js` extensions so Node can run them.
+- `src/imaging/`, `src/contact/`, `src/export/`, `src/modes.js`: pure, platform-independent logic, unit tested with `npm test` (Node's test runner). Import siblings with explicit `.js` extensions so Node can run them.
 - `src/hooks/`: React hooks bridging pure logic and the platform layer.
 - `src/ui/`: presentational components; colors and text styles come from `src/ui/theme.js`.
 - `src/platform/*.web.js` / `*.native.js`: platform layer (pixel access, export, OCR). Keep both files exporting the same API.

@@ -44,6 +44,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderRadius: 10,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   compact: { flexBasis: 64, paddingVertical: 7, paddingHorizontal: 8 },
   selected: { borderWidth: 2 },

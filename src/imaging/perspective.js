@@ -145,7 +145,18 @@ export function detectDocument(img, { size = 200 } = {}) {
   });
   const quad = [up(tl), up(tr), up(br), up(bl)];
   if (polygonArea(quad) < 0.1 * img.width * img.height) return null;
-  return quad;
+  return insetQuad(quad, 0.005 * Math.max(img.width, img.height));
+}
+
+// Pull each corner `amount` pixels toward the centre, so a slightly generous
+// detection doesn't leave a sliver of the background along the page edge.
+function insetQuad(quad, amount) {
+  const cx = quad.reduce((a, p) => a + p.x, 0) / 4;
+  const cy = quad.reduce((a, p) => a + p.y, 0) / 4;
+  return quad.map((p) => {
+    const d = Math.hypot(cx - p.x, cy - p.y) || 1;
+    return { x: p.x + ((cx - p.x) / d) * amount, y: p.y + ((cy - p.y) / d) * amount };
+  });
 }
 
 // Solve A·x = b (n×n) by Gaussian elimination with partial pivoting.

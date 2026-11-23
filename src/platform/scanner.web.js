@@ -69,8 +69,14 @@ export async function exportImage(img, baseName) {
   download(await toBlob(img), `${baseName}.png`);
 }
 
-export async function exportVCard(text, fileName) {
-  download(new Blob([text], { type: 'text/vcard;charset=utf-8' }), fileName);
+// Save a generated file (text or bytes) to the user's downloads.
+export async function exportFile(content, fileName, mimeType) {
+  download(new Blob([content], { type: mimeType }), fileName);
+}
+
+export async function encodeJpeg(img, quality = 0.9) {
+  const blob = await toBlob(img, 'image/jpeg', quality);
+  return new Uint8Array(await blob.arrayBuffer());
 }
 
 let tesseractPromise = null;
