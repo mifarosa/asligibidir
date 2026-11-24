@@ -1,6 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { applyHomography, detectDocument, fullQuad, homography, outputSize, warpPerspective } from '../src/perspective.js';
+import {
+  applyHomography,
+  detectDocument,
+  fullQuad,
+  homography,
+  outputSize,
+  warpPerspective,
+} from '../src/imaging/perspective.js';
 
 // Dark desk with a bright, tilted "page" whose corners are known. The page has
 // a black square drawn in its top-left quarter so orientation can be checked.
@@ -28,7 +35,12 @@ function inside(q, x, y) {
 function makePhoto(width = 300, height = 240) {
   const data = new Uint8ClampedArray(width * height * 4);
   // Page coordinates (unit square) of each pixel, so the marker follows the perspective.
-  const inv = homography(PAGE, [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 1, y: 1 }, { x: 0, y: 1 }]);
+  const inv = homography(PAGE, [
+    { x: 0, y: 0 },
+    { x: 1, y: 0 },
+    { x: 1, y: 1 },
+    { x: 0, y: 1 },
+  ]);
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       let v = 60 + ((x * 7 + y * 13) % 20); // textured desk
@@ -43,7 +55,12 @@ function makePhoto(width = 300, height = 240) {
 }
 
 test('homography maps the four corners exactly', () => {
-  const rect = [{ x: 0, y: 0 }, { x: 99, y: 0 }, { x: 99, y: 49 }, { x: 0, y: 49 }];
+  const rect = [
+    { x: 0, y: 0 },
+    { x: 99, y: 0 },
+    { x: 99, y: 49 },
+    { x: 0, y: 49 },
+  ];
   const H = homography(rect, PAGE);
   rect.forEach((p, i) => {
     const q = applyHomography(H, p.x, p.y);
@@ -73,7 +90,12 @@ test('warpPerspective straightens the page and keeps orientation', () => {
   assert.deepEqual({ width, height }, outputSize(PAGE));
   const at = (fx, fy) => out.data[(Math.round(fy * (height - 1)) * width + Math.round(fx * (width - 1))) * 4];
   assert.ok(at(0.2, 0.2) < 60, 'marker should land in the top-left quarter');
-  for (const [fx, fy] of [[0.8, 0.2], [0.8, 0.8], [0.2, 0.8], [0.5, 0.5]]) {
+  for (const [fx, fy] of [
+    [0.8, 0.2],
+    [0.8, 0.8],
+    [0.2, 0.8],
+    [0.5, 0.5],
+  ]) {
     assert.ok(at(fx, fy) > 200, `page at ${fx},${fy} should be white`);
   }
 });

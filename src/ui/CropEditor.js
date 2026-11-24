@@ -1,13 +1,16 @@
 import { useMemo, useRef, useState } from 'react';
-import { Image, PanResponder, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { Image, PanResponder, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Svg, { Circle, Polygon } from 'react-native-svg';
+import Button from './Button';
+import { layout, text, useColors } from './theme';
 
 const HANDLE = 44; // touch target size in px
 const CORNER_LABELS = ['Sol üst köşe', 'Sağ üst köşe', 'Sağ alt köşe', 'Sol alt köşe'];
 
 // Shows the photo with the detected page outline and four draggable corners.
 // Corner coordinates are in image pixels; `onMove(index, point)` reports drags.
-export default function CropEditor({ image, quad, onMove, onDragChange, colors }) {
+export default function CropEditor({ image, quad, onMove, onDragChange, onConfirm, onUseWhole, busy }) {
+  const colors = useColors();
   const window = useWindowDimensions();
   const [containerWidth, setContainerWidth] = useState(0);
 
@@ -53,44 +56,48 @@ export default function CropEditor({ image, quad, onMove, onDragChange, colors }
   const points = quad.map((p) => `${p.x * scale},${p.y * scale}`).join(' ');
 
   return (
-    <View style={styles.wrap} onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}>
-      {width > 0 && (
-        <View style={{ width, height }}>
-          <Image source={{ uri: image.uri }} style={{ width, height }} resizeMode="stretch" />
-          <Svg width={width} height={height} style={StyleSheet.absoluteFill} pointerEvents="none">
-            <Polygon
-              points={points}
-              fill={colors.accent}
-              fillOpacity={0.15}
-              stroke={colors.accent}
-              strokeWidth={2.5}
-              strokeLinejoin="round"
-            />
-            {quad.map((p, i) => (
-              <Circle
-                key={i}
-                cx={p.x * scale}
-                cy={p.y * scale}
-                r={11}
-                fill="#ffffff"
+    <View style={layout.section}>
+      <Text style={[text.h2, { color: colors.text }]}>Kırpma</Text>
+      <View style={styles.wrap} onLayout={(e) => setContainerWidth(e.nativeEvent.layout.width)}>
+        {width > 0 && (
+          <View style={{ width, height }}>
+            <Image source={{ uri: image.uri }} style={{ width, height }} resizeMode="stretch" />
+            <Svg width={width} height={height} style={StyleSheet.absoluteFill} pointerEvents="none">
+              <Polygon
+                points={points}
+                fill={colors.accent}
+                fillOpacity={0.15}
                 stroke={colors.accent}
-                strokeWidth={3}
+                strokeWidth={2.5}
+                strokeLinejoin="round"
+              />
+              {quad.map((p, i) => (
+                <Circle
+                  key={i}
+                  cx={p.x * scale}
+                  cy={p.y * scale}
+                  r={11}
+                  fill="#ffffff"
+                  stroke={colors.accent}
+                  strokeWidth={3}
+                />
+              ))}
+            </Svg>
+            {quad.map((p, i) => (
+              <View
+                key={i}
+                {...responders[i].panHandlers}
+                accessibilityLabel={CORNER_LABELS[i]}
+                style={[styles.handle, { left: p.x * scale - HANDLE / 2, top: p.y * scale - HANDLE / 2 }]}
               />
             ))}
-          </Svg>
-          {quad.map((p, i) => (
-            <View
-              key={i}
-              {...responders[i].panHandlers}
-              accessibilityLabel={CORNER_LABELS[i]}
-              style={[
-                styles.handle,
-                { left: p.x * scale - HANDLE / 2, top: p.y * scale - HANDLE / 2 },
-              ]}
-            />
-          ))}
-        </View>
-      )}
+          </View>
+        )}
+      </View>
+      <View style={layout.row}>
+        <Button title="Kırp ve devam et" onPress={onConfirm} disabled={busy} />
+        <Button title="Tamamını kullan" onPress={onUseWhole} disabled={busy} variant="outline" />
+      </View>
     </View>
   );
 }

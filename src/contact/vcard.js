@@ -4,10 +4,12 @@ const EMAIL_RE = /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi;
 const URL_RE = /\b(?:https?:\/\/|www\.)[^\s,;]+/gi;
 const PHONE_RE = /(?:\+|\b00)?\(?\d[\d\s().\-/]{5,}\d/g;
 
-const ORG_RE = /\b(?:a\.?\s?ş\.?|ltd\.?|şti\.?|inc\.?|llc|gmbh|corp\.?|holding|limited|şirketi|company|co\.)(?=\s|$|[,.])/i;
+const ORG_RE =
+  /\b(?:a\.?\s?ş\.?|ltd\.?|şti\.?|inc\.?|llc|gmbh|corp\.?|holding|limited|şirketi|company|co\.)(?=\s|$|[,.])/i;
 const TITLE_RE =
   /\b(?:müdür\w*|yönetici\w*|direktör\w*|mühendis\w*|uzman\w*|danışman\w*|başkan\w*|sorumlu\w*|temsilci\w*|avukat|doktor|dr\.|ceo|cto|cfo|coo|founder|kurucu\w*|ortak|manager|director|engineer|developer|designer|consultant|specialist|president|officer|head|lead|sales|satış)\b/i;
-const ADDRESS_RE = /\b(?:mah\.?|mahalle\w*|cad\.?|cadde\w*|sok\.?|sokak|bulvar\w*|blv\.?|no\s*[:.]|kat\s*[:.]?|daire|plaza|street|st\.|avenue|ave\.|road|suite|floor|\d{5}\s+\p{L}+)/iu;
+const ADDRESS_RE =
+  /\b(?:mah\.?|mahalle\w*|cad\.?|cadde\w*|sok\.?|sokak|bulvar\w*|blv\.?|no\s*[:.]|kat\s*[:.]?|daire|plaza|street|st\.|avenue|ave\.|road|suite|floor|\d{5}\s+\p{L}+)/iu;
 const FAX_LABEL_RE = /\b(?:faks|fax|f\s*[:.])/i;
 const CELL_LABEL_RE = /\b(?:gsm|cep|mobil\w*|mobile|cell|m\s*[:.])/i;
 
@@ -24,7 +26,10 @@ function isTurkishMobile(value) {
 }
 
 function cleanPhone(raw) {
-  return raw.replace(/[^\d+()\s-]/g, ' ').replace(/\s+/g, ' ').trim();
+  return raw
+    .replace(/[^\d+()\s-]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function classifyPhone(line, value) {
@@ -116,11 +121,7 @@ export function parsePhoneLine(line) {
 }
 
 function escapeValue(v) {
-  return String(v)
-    .replace(/\\/g, '\\\\')
-    .replace(/\r?\n/g, '\\n')
-    .replace(/,/g, '\\,')
-    .replace(/;/g, '\\;');
+  return String(v).replace(/\\/g, '\\\\').replace(/\r?\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;');
 }
 
 // RFC 6350/2426 line folding: max 75 octets per line, never splitting a
@@ -174,7 +175,20 @@ export function buildVCard(contact) {
   return lines.map(foldLine).join('\r\n') + '\r\n';
 }
 
-const ASCII_MAP = { ı: 'i', İ: 'I', ş: 's', Ş: 'S', ğ: 'g', Ğ: 'G', ç: 'c', Ç: 'C', ö: 'o', Ö: 'O', ü: 'u', Ü: 'U' };
+const ASCII_MAP = {
+  ı: 'i',
+  İ: 'I',
+  ş: 's',
+  Ş: 'S',
+  ğ: 'g',
+  Ğ: 'G',
+  ç: 'c',
+  Ç: 'C',
+  ö: 'o',
+  Ö: 'O',
+  ü: 'u',
+  Ü: 'U',
+};
 
 // ASCII-only names: some browsers ignore a non-ASCII `download` attribute.
 export function vcardFileName(contact) {

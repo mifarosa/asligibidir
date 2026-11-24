@@ -1,6 +1,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { parseContact, buildVCard, parsePhoneLine, formatPhoneLine, vcardFileName } from '../src/vcard.js';
+import {
+  parseContact,
+  buildVCard,
+  parsePhoneLine,
+  formatPhoneLine,
+  vcardFileName,
+} from '../src/contact/vcard.js';
 
 const CARD = `
 ÖRNEK YAZILIM A.Ş.
